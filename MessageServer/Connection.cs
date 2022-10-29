@@ -20,10 +20,34 @@ namespace MessageServer {
             stream = this.client.GetStream();
         }
 
+        public void Handshake() {
+            int opcode = stream.ReadByte();
+            if (opcode == 10)
+                SendData(_server._crypto.getPubKey());
+
+            Task.Run(Listen);
+        }
+
         public void Listen() {
             while (!_disposing) {
                 int opcode = stream.ReadByte();
                 Console.WriteLine("op: " + opcode);
+                if(opcode == 0) {
+                    byte[] buffer = new byte[255];
+                    int termCount = 0;
+                    int writtenBytes = 0;
+                    do {
+                        buffer[writtenBytes] = (byte)stream.ReadByte();
+                        if (buffer[writtenBytes] == 0)
+                            termCount++;
+                        else
+                            termCount = 0;
+                        writtenBytes++;
+                    } while (termCount < 4 && writtenBytes < 255);
+
+                    byte[] decryptedBytes = _server._crypto.DecryptBytes(buffer);
+                    _server.SendAll(decryptedBytes);
+                }
             }
             if (client.Connected)
                 client.Close();
@@ -34,7 +58,8 @@ namespace MessageServer {
         }
 
         public void SendData(byte[] data) {
-            stream.Write(data);
+            if(client.Connected)
+                stream.Write(data);
         }
 
         public void Dispose() { 

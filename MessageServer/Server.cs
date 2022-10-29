@@ -21,7 +21,7 @@ namespace MessageServer {
                 if (_server.Pending()) {
                     Connection c = new Connection(_server.AcceptTcpClient(), this);
                     connections.Add(c);
-                    Task.Run(c.Listen);
+                    Task.Run(c.Handshake);
                 }
             }
             DisposeConnections();
@@ -40,6 +40,7 @@ namespace MessageServer {
             foreach (var connection in connections) {
                 connection.Dispose();
             }
+            connections.Clear();
         }
 
         public void Dispose() {
