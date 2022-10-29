@@ -22,6 +22,7 @@ namespace MessageServer {
 
         public void Handshake() {
             int opcode = stream.ReadByte();
+            Console.WriteLine("op: " + opcode);
             if (opcode == 10)
                 SendData(_server._crypto.getPubKey());
 
@@ -32,8 +33,8 @@ namespace MessageServer {
             while (!_disposing) {
                 int opcode = stream.ReadByte();
                 Console.WriteLine("op: " + opcode);
-                if(opcode == 0) {
-                    byte[] buffer = new byte[255];
+                if (opcode == 0) {
+                    byte[] buffer = new byte[1024];
                     int termCount = 0;
                     int writtenBytes = 0;
                     do {
@@ -43,11 +44,15 @@ namespace MessageServer {
                         else
                             termCount = 0;
                         writtenBytes++;
-                    } while (termCount < 4 && writtenBytes < 255);
-
-                    byte[] decryptedBytes = _server._crypto.DecryptBytes(buffer);
+                    } while (termCount < 4 && writtenBytes < 1024);
+                    byte[] output = new byte[writtenBytes - 4];
+                    for (int i = 0; i < output.Length; i++) {
+                        output[i] = buffer[i];
+                    }
+                    byte[] decryptedBytes = _server._crypto.DecryptBytes(output);
                     _server.SendAll(decryptedBytes);
-                }
+                } else if (opcode == 100)
+                    Dispose();
             }
             if (client.Connected)
                 client.Close();
@@ -58,8 +63,13 @@ namespace MessageServer {
         }
 
         public void SendData(byte[] data) {
-            if(client.Connected)
-                stream.Write(data);
+            if (client.Connected) {
+                byte[] send = new byte[data.Length + 4];
+                for (int i = 0; i < data.Length; i++) {
+                    send[i] = data[i];
+                }
+                stream.Write(send);
+            }
         }
 
         public void Dispose() { 

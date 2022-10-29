@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Text;
 
 namespace MessageServer {
     public class Server {
@@ -8,7 +9,7 @@ namespace MessageServer {
         private List<Connection> connections = new List<Connection>();
 
         public Crypto _crypto = new Crypto(0.1f);
-        TcpListener _server = new TcpListener(Dns.GetHostEntry("localhost").AddressList[0], 4434);
+        TcpListener _server = new TcpListener(4434);
 
         public void Start() {
             Task.Run(Listen);
@@ -30,6 +31,7 @@ namespace MessageServer {
         }
 
         public void SendAll(byte[] data) {
+            Console.WriteLine(Encoding.UTF8.GetString(data));
             foreach(var connection in connections) {
                 connection.SendData(data);
             }

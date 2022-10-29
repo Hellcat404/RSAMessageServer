@@ -3,5 +3,5 @@ using MessageServer;
 
 Server s = new Server();
 s.Start();
-s.Dispose();
 Console.ReadLine();
+s.Dispose();
