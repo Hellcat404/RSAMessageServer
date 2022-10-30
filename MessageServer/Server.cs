@@ -31,9 +31,8 @@ namespace MessageServer {
         }
 
         public void SendAll(byte[] data) {
-            Console.WriteLine(Encoding.UTF8.GetString(data));
             foreach(var connection in connections) {
-                connection.SendData(data);
+                connection.SendData(data, 0);
             }
         }
 
