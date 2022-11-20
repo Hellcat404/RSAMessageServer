@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MessageServer {
     internal class Connection {
@@ -25,6 +21,7 @@ namespace MessageServer {
             if (opcode == 10)
                 SendKey(_server._crypto.getPubKey());
 
+            Console.WriteLine($"[{client.Client.RemoteEndPoint?.ToString()}] Connection established!");
             Task.Run(Listen);
         }
 

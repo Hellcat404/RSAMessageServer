@@ -9,7 +9,7 @@ namespace MessageServer {
         private List<Connection> connections = new List<Connection>();
 
         public Crypto _crypto = new Crypto(0.1f);
-        TcpListener _server = new TcpListener(4434);
+        TcpListener _server = new TcpListener(IPAddress.Any, 4434);
 
         public void Start() {
             Task.Run(Listen);
@@ -38,6 +38,7 @@ namespace MessageServer {
 
         private void DisposeConnections() {
             Console.WriteLine("Disposing connections...");
+            SendAll(Encoding.UTF8.GetBytes("Server shutting down..."));
             foreach (var connection in connections) {
                 connection.Dispose();
             }
