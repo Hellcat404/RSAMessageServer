@@ -20,6 +20,7 @@ namespace MessageServer {
 
         private RSA InitRSA(string keyFile) {
             //Instantiate RSACng with key size of 2048 bits (256 bytes)
+            //Larger key size allows for more data to be encrypted at one time, higher encryption complexity and therefore more processing time
             rsa = RSACng.Create(2048);
 
             //If we already have a keyfile, read the keyfile into the rsa, this overwrites our instantiated RSA
