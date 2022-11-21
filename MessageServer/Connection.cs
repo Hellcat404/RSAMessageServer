@@ -35,10 +35,7 @@ namespace MessageServer {
 
                     byte[] buffer = data[0];
 
-                    //stores the message with terminators (trailing empty bytes) stripped
-                    byte[] output = StreamUtils.RemoveTerminator(buffer, buffer.Length);
-
-                    byte[] decryptedBytes = _server._crypto.DecryptBytes(output);
+                    byte[] decryptedBytes = _server._crypto.DecryptBytes(buffer);
                     Console.WriteLine($"From client: {Encoding.UTF8.GetString(decryptedBytes)}");
                     _server.SendAll(decryptedBytes);
                 } else if (opcode == 100)
@@ -48,32 +45,36 @@ namespace MessageServer {
                 client.Close();
         }
 
-        //TODO
         //Read data up to 4 terminator bytes, split data read into 256 byte arrays to decrypt in chunks
         //This will allow for more data to be sent at one time and allow us to throw away the termination bytes easily (final array will be 4 bytes long)
         private List<byte[]> ReadData() {
             List<byte[]> data = new List<byte[]>();
 
-            //1024 byte buffer - Arbitrary number, allows for short-mid sized messages to be read
-            byte[] buffer = new byte[1024];
-            //termCount - Terminator count, empty bytes read - 4 in a row to end a message to the server
+            //termCount - Terminator count, empty bytes read - 4 in a row to end a message
             int termCount = 0;
-            int writtenBytes = 0;
             do {
-                buffer[writtenBytes] = (byte)stream.ReadByte();
-                if (buffer[writtenBytes] == 0)
-                    termCount++;
-                else
-                    termCount = 0;
-                writtenBytes++;
-            } while (termCount < 4 && writtenBytes < 1024);
+                //256 byte buffer - Reads one "chunk" of decryptable data
+                byte[] buffer = new byte[256];
 
-            Console.WriteLine($"{writtenBytes} bytes read!");
+                //Attempt to read one chunk of data from the stream, if 4 termination bytes are read, break (We're done reading data)
+                for (int i = 0; i < 256; i++) {
+                    buffer[i] = (byte)stream.ReadByte();
 
-            byte[] output = new byte[writtenBytes];
-            Array.Copy(buffer, output, output.Length);
+                    if (buffer[i] != 0) {
+                        termCount = 0;
+                    } else {
+                        termCount++;
+                        if (termCount == 4) {
+                            break;
+                        }
+                    }
+                }
 
-            data.Add(output);
+                //Only add data to the list if it is NOT the terminator
+                if(termCount < 4)
+                    data.Add(buffer);
+            } while (termCount < 4);
+
             return data;
         }
 
